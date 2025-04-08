@@ -1,4 +1,7 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
+import axios from 'axios'
+import personService from './services/persons'
+
 
 const Filter = ({filter, handleFilterChange}) => {
   return (
@@ -33,11 +36,12 @@ const PersForm = ({newName,newNumber,handleNameChange,handleNumberChange,addPers
   )
 }
 
-const Persons = ({showPers}) => {
+const Persons = ({showPers, handleDelete}) => {
   return (
     <div>
       {showPers.map(person => (
-        <p key={person.name}>{person.name} {person.number}</p>
+        <p key={person.id}>{person.name} {person.number}
+        <button onClick={() => handleDelete(person.id, person.name)}>delete</button></p>
       ))}
     </div>
 
@@ -45,33 +49,60 @@ const Persons = ({showPers}) => {
 }
 
 const App = () => {
-  const [persons, setPersons] = useState([
-    { name: 'Arto Hellas', number: '050-050050'},
-    {name: 'testi Mctestington', number: '050-050051'},
-    {name: 'Puhelin Myyjä', number: '050-050052'},
-    {name: 'Mikan Sukset', number: '050-050053'},
-    {name: 'Mikon Kaakelit', number: '050-050054'}
-   
-  ]) 
+  const [persons, setPersons] = useState([])
   const [newName, setNewName] = useState('')
   const [newNumber, setNewNumber] = useState('')
   const [filter, setFilter] = useState('')
 
+  useEffect(() => {
+    personService
+      .getAll()
+      .then(initPers => {
+        setPersons(initPers)
+      })
+      .catch(error => {
+        console.error("fetching error")
+      })
+  },[])
+
   const addPerson = (event) => {
     event.preventDefault()
 
-    const duplicate = persons.some(person =>
+    const duplicate = persons.find(person =>
       person.name.toLowerCase() === newName.trim().toLowerCase())
     if (duplicate) {
-      window.alert(`${newName.trim()} is already added to the phonebook`)
-    } else if (newName.trim() !== '') {
+      if(window.confirm(`${newName.trim()} is already added to the phonebook, replace the old number with new one?`)){
+        const updatedPers = {...duplicate,number: newNumber.trim()}
+        personService
+          .update(duplicate.id, updatedPers)
+          .then(returnedPers => {
+            setPersons(persons.map(person =>
+              person.id === duplicate.id ? returnedPers : person
+            ))
+            setNewName('')
+            setNewNumber('')
+          })
+          .catch(error => {
+            console.error('update err:', error)
+            window.alert('Update err')
+          })
+      }
+    } else {
       const newPerson = {
         name: newName.trim(),
         number: newNumber.trim()
       }
-    setPersons(persons.concat(newPerson))
-    setNewName('')
-    setNewNumber('')
+    personService
+      .create(newPerson)
+      .then(returnPers => {
+        setPersons(persons.concat(returnPers))
+        setNewName('')
+        setNewNumber('')
+      })
+      .catch(error => {
+        console.error('Add error:', error)
+        window.alert('Add failed')
+      })
   }
 }
   const handleNameChange = (event) => {
@@ -82,6 +113,19 @@ const App = () => {
   }
   const handleFilterChange = (event) => {
     setFilter(event.target.value)
+  }
+  const handleDelete = (id, name) => {
+    if (window.confirm(`Delete ${name}?`)){
+      personService
+        .remove(id)
+        .then(() => {
+          setPersons(persons.filter(person => person.id !== id))
+        })
+        .catch(error => {
+          console.error('del err:', err)
+          window.alert("failed del")
+        })
+    }
   }
   const showPers = filter.trim() === ''
     ? persons
@@ -108,6 +152,7 @@ const App = () => {
       <h2>Numbers</h2>
       <Persons
         showPers={showPers}
+        handleDelete={handleDelete}
       />
     </div>
   )
