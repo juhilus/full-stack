@@ -71,7 +71,8 @@ const App = () => {
         setPersons(initPers)
       })
       .catch(error => {
-        console.error("fetching error")
+        //console.error("fetching error")
+        console.log(error.response.data)
       })
   },[])
 
@@ -147,7 +148,7 @@ const App = () => {
           setTimeout(() => setNotification(null), 5000)
         })
         .catch(error => {
-          console.error('del err:', err)
+          console.error('del err:', error)
           window.alert("failed del")
         })
     }

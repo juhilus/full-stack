@@ -54,17 +54,13 @@ app.delete('/api/persons/:id', (request, response, next) => {
 
 })
 app.put('/api/persons/:id', (request, response, next) => {
-  const body = request.body
-  const person = {
-    name: body.name,
-    number: body.number,
-  }
-  Person.findByIdAndUpdate(request.params.id, person, { new: true }).then(uPerson => {
+  const { name, number} = request.body
+  Person.findByIdAndUpdate(request.params.id, {name, number}, { new: true, runValidators: true, context: 'query'}).then(uPerson => {
     response.json(uPerson)
   }).catch(error => next(error))
 })
 
-app.post('/api/persons', (request, response) => {
+app.post('/api/persons', (request, response, next) => {
     //const id = String(Math.floor(Math.random() * 1000000) + 1)
     const body = request.body
 
@@ -81,16 +77,15 @@ app.post('/api/persons', (request, response) => {
   
     person.save().then(person => {
       response.json(person)
-    })
+    }).catch(error => next(error))
     }
-
   })
 
 const errorHandler = (error, request, response, next) => {
   console.error(error.message)
   if (error.name == 'CastError'){
       return response.status(400).send({ error: 'invalid id'})
-  }
+  }else if (error.name === 'ValidationError') { return response.status(400).json({error: error.message})}
     next(error)
   }
 app.use(errorHandler)
