@@ -10,7 +10,7 @@ app.use(express.json())
 app.use(express.static('build'))
 app.use(express.static('dist'))
 morgan.token('bodyreq', request => {
-    return JSON.stringify(request.body)
+  return JSON.stringify(request.body)
 })
 app.use(morgan(':method :url :status :res[content-length] - :response-time ms :bodyreq'))
 
@@ -22,30 +22,28 @@ app.get('/api/persons', (request, response, next) => {
   Person.find({}).then(result => {
     response.json(result)
   })
-  .catch(error => next(error))
+    .catch(error => next(error))
 })
 
 app.get('/info', (request, response, next) => {
-    const curT = new Date().toString()
-    Person.find({}).then(result => {
-      const info = `
-       <p>Phonebook has info for ${result.length} people</p>
-       <p>${curT}</p>`
-       response.send(info)
-    }).catch(error => next(error))
-   
-    
+  const curT = new Date().toString()
+  Person.find({}).then(result => {
+    const info = `
+      <p>Phonebook has info for ${result.length} people</p>
+      <p>${curT}</p>`
+    response.send(info)
+  }).catch(error => next(error))
 })
 
 app.get('/api/persons/:id', (request, response, next) => {
-    Person.findById(request.params.id).then(person => {
-      if(person){
-        response.json(person)
-      }else{
-        response.status(404).end()
-      }
-    }).catch(error => next(error))
-  })
+  Person.findById(request.params.id).then(person => {
+    if(person){
+      response.json(person)
+    }else{
+      response.status(404).end()
+    }
+  }).catch(error => next(error))
+})
 
 app.delete('/api/persons/:id', (request, response, next) => {
   Person.findByIdAndDelete(request.params.id).then(result => {
@@ -54,40 +52,37 @@ app.delete('/api/persons/:id', (request, response, next) => {
 
 })
 app.put('/api/persons/:id', (request, response, next) => {
-  const { name, number} = request.body
-  Person.findByIdAndUpdate(request.params.id, {name, number}, { new: true, runValidators: true, context: 'query'}).then(uPerson => {
+  const { name, number } = request.body
+  Person.findByIdAndUpdate(request.params.id, { name, number }, { new: true, runValidators: true, context: 'query' }).then(uPerson => {
     response.json(uPerson)
   }).catch(error => next(error))
 })
 
 app.post('/api/persons', (request, response, next) => {
-    //const id = String(Math.floor(Math.random() * 1000000) + 1)
-    const body = request.body
+  const body = request.body
+  if(!body.name || !body.number) {
+    return response.status(400).json({
+      error: 'name or number missing'
+    })
+  }else{
+    const person = new Person ({
+      name: body.name,
+      number: body.number,
+    })
 
-    if(!body.name || !body.number) {
-        return response.status(400).json({
-            error: 'name or number missing'
-        })
-    }else{
-      const person = new Person ({
-        //id: id,
-        name: body.name,
-        number: body.number,
-      })
-  
     person.save().then(person => {
       response.json(person)
     }).catch(error => next(error))
-    }
-  })
+  }
+})
 
 const errorHandler = (error, request, response, next) => {
   console.error(error.message)
-  if (error.name == 'CastError'){
-      return response.status(400).send({ error: 'invalid id'})
-  }else if (error.name === 'ValidationError') { return response.status(400).json({error: error.message})}
-    next(error)
-  }
+  if (error.name === 'CastError'){
+    return response.status(400).send({ error: 'invalid id' })
+  }else if (error.name === 'ValidationError') { return response.status(400).json({ error: error.message })}
+  next(error)
+}
 app.use(errorHandler)
 
 const PORT = process.env.PORT
