@@ -14,6 +14,8 @@ beforeEach(async () => {
   await Promise.all(pArr)
 })
 
+
+describe('When initial notes exists', () => {
 test('blogs are returned as json', async () => {
   await api
     .get('/api/blogs')
@@ -37,7 +39,8 @@ test('Specific identifider for blogs is named id', async () => {
 
   expect(resultBlog).toBeDefined()
 })
-
+})
+describe('viewing a specific blog', () => {
 test('a valid blog can be added ', async () => {
   const newBlog = {
     title: 'TDD harms architecture',
@@ -104,8 +107,9 @@ test('blog without url is not added', async () => {
   
     expect(blogsAtEnd).toHaveLength(helper.initialBlogs.length)
 })
+})
 
-
+describe('deletion of a blog', () => {
 test('a blog can be deleted', async () => {
   const blogsAtStart = await helper.blogsInDb()
   const blogToDelete = blogsAtStart[0]
@@ -115,6 +119,30 @@ test('a blog can be deleted', async () => {
   const blogsAtEnd = await helper.blogsInDb()
 
   expect(blogsAtEnd).toHaveLength(helper.initialBlogs.length - 1)
+  const titles = blogsAtEnd.map(r => r.title)
+  expect(titles).not.toContain(blogToDelete.title)
+})
+})
+
+describe('update of a blog', () => {
+test('Single blog can be edited', async () => {
+  const start = await helper.blogsInDb()
+  const blogToView = start[0]
+  const newBlog = {
+    title: start[0].title,
+    author: start[0].author,
+    url: start[0].url,
+    likes: 9999999
+  }
+  await api.put(`/api/blogs/${blogToView.id}`).send(newBlog).expect(200).expect('Content-Type', /application\/json/)
+  const blogsAtEnd = await helper.blogsInDb()
+  expect(blogsAtEnd).toHaveLength(helper.initialBlogs.length)
+  const blikes = start.map(n => n.likes)
+  const alikes = blogsAtEnd.map(n => n.likes)
+  expect(alikes).not.toContain(blikes)
+
+
+})
 })
 
 afterAll(async () => {
