@@ -1,0 +1,10 @@
+post http://localhost:3001/api/blogs
+Content-Type: application/json
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VybmFtZSI6InRlc3RlcmkxMTEiLCJpZCI6IjY4YzZjZDI3MjYyNDM0NDNiNWNiYTkxYyIsImlhdCI6MTc1Nzg2MzQ5NH0.nPEtDg9EJSmv4qmyK-50Y27OPFacRmPMdfiknD3OpQ8
+
+{
+    "title": "kokeilu22",
+    "author": "minä",
+    "url": "localhost:3001/api/blogs/33",
+    "likes": 0
+}
