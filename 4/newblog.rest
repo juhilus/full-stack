@@ -1,10 +1,10 @@
 post http://localhost:3001/api/blogs
 Content-Type: application/json
-Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VybmFtZSI6InRlc3RlcmkxMTEiLCJpZCI6IjY4YzZjZDI3MjYyNDM0NDNiNWNiYTkxYyIsImlhdCI6MTc1Nzg2MzQ5NH0.nPEtDg9EJSmv4qmyK-50Y27OPFacRmPMdfiknD3OpQ8
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VybmFtZSI6InRlc3RlcmkxMTEiLCJpZCI6IjY4YzZjZDI3MjYyNDM0NDNiNWNiYTkxYyIsImlhdCI6MTc1Nzg2NjkwNiwiZXhwIjoxNzU3ODcwNTA2fQ.-7jLasTE_aMaOo7VBfUDdvOlFjYW1XUKlJ2id5ns1qQ
 
 {
-    "title": "kokeilu22",
+    "title": "middletest",
     "author": "minä",
-    "url": "localhost:3001/api/blogs/33",
+    "url": "localhost:3001/api/blogs/39",
     "likes": 0
 }
