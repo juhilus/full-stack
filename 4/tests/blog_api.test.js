@@ -10,11 +10,35 @@ const { default: expect } = require('expect')
 const api = supertest(app)
 
 beforeEach(async () => {
-  await Blog.deleteMany({})
-  const blogObj = helper.initialBlogs.map(blog => new Blog(blog))
-  const pArr = blogObj.map(blog => blog.save())
-  await Promise.all(pArr)
+  await User.deleteMany({})
+  const passwordHash = await bcrypt.hash("yess", 10)
+  const user = new User({
+    username: "qqq",
+    name: "moikkeli",
+    blogs: [],
+    passwordHash
+  }, 1000)
+  await user.save()
 })
+
+  beforeEach(async () => {
+  await Blog.deleteMany({})
+  const users = await User.find({})
+  const user = users[0]
+  const blogObj = helper.initialBlogs.map(blog => new Blog({
+    title: blog.title,
+    author: blog.author,
+    url: blog.url,
+    user: user._id,
+    likes: blog.likes ? blog.likes: 0
+  }))
+  const pArr = blogObj.map(blog => {
+  blog.save()
+  user.blogs = user.blogs.concat(blog._id)
+  })
+  await Promise.all(pArr)
+  await user.save()
+}, 1000)
 
 
 describe('When initial blogs exists', () => {
@@ -43,7 +67,12 @@ test('Specific identifider for blogs is named id', async () => {
 })
 })
 describe('viewing a specific blog', () => {
-test('a valid blog can be added ', async () => {
+test('a valid blog can be added by correct user', async () => {
+  const user = {
+    username: "qqq",
+    password: "yess"
+  }
+  const login = await api.post('/api/login').send(user)
   const newBlog = {
     title: 'TDD harms architecture',
     author: 'Robert C. Martin',
@@ -54,6 +83,7 @@ test('a valid blog can be added ', async () => {
   await api
     .post('/api/blogs')
     .send(newBlog)
+    .set('Authorization', `Bearer ${login.body.token}`)
     .expect(201)
     .expect('Content-Type', /application\/json/)
 
@@ -64,7 +94,33 @@ test('a valid blog can be added ', async () => {
   expect(ctt).toContain('TDD harms architecture')
 })
 
+test('Blog cant be added by unauthorized user', async () => {
+  const newBlog = {
+    title: 'qQqQ',
+    author: 'Robert C. Martin',
+    url: 'http://blog.cleancoder.com/uncle-bob/2017/03/03/TDD-Harms-Architecture.html',
+    likes: 5
+}
+
+  await api
+    .post('/api/blogs')
+    .send(newBlog)
+    .expect(401)
+    .expect('Content-Type', /application\/json/)
+
+  const blogsAtEnd = await helper.blogsInDb()
+  expect(blogsAtEnd).toHaveLength(helper.initialBlogs.length)
+
+  const ctt = blogsAtEnd.map(n => n.title)
+  expect(ctt).not.toContain('qQqQ')
+})
+
 test('a blog with no likes gets likes property', async () => {
+  const user = {
+    username: "qqq",
+    password: "yess"
+  }
+  const login = await api.post('/api/login').send(user)
     const newBlog = {
       title: "TDD HAAAAAAAA",
       author: "Robert C. Martinnnn",
@@ -74,6 +130,7 @@ test('a blog with no likes gets likes property', async () => {
     await api
       .post('/api/blogs')
       .send(newBlog)
+      .set('Authorization', `Bearer ${login.body.token}`)
       .expect(201)
       .expect('Content-Type', /application\/json/)
   
@@ -85,12 +142,17 @@ test('a blog with no likes gets likes property', async () => {
   })
 
 test('blog without title is not added', async () => {
+  const user = {
+    username: "qqq",
+    password: "yess"
+  }
+  const login = await api.post('/api/login').send(user)
   const newBlog = {
     url: "https://EITOIMI",
     author: "NAAAHH"
   }
 
-  await api.post('/api/blogs').send(newBlog).expect(400)
+  await api.post('/api/blogs').send(newBlog).expect(400).set('Authorization', `Bearer ${login.body.token}`)
 
   const blogsAtEnd = await helper.blogsInDb()
 
@@ -98,12 +160,17 @@ test('blog without title is not added', async () => {
 })
 
 test('blog without url is not added', async () => {
+  const user = {
+    username: "qqq",
+    password: "yess"
+  }
+  const login = await api.post('/api/login').send(user)
     const newBlog = {
       title: 'EIIIIIII',
       author: "NAAAHH"
     }
   
-    await api.post('/api/blogs').send(newBlog).expect(400)
+    await api.post('/api/blogs').send(newBlog).expect(400).set('Authorization', `Bearer ${login.body.token}`)
   
     const blogsAtEnd = await helper.blogsInDb()
   
@@ -113,10 +180,15 @@ test('blog without url is not added', async () => {
 
 describe('deletion of a blog', () => {
 test('a blog can be deleted', async () => {
+  const user = {
+    username: "qqq",
+    password: "yess"
+  }
+  const login = await api.post('/api/login').send(user)
   const blogsAtStart = await helper.blogsInDb()
   const blogToDelete = blogsAtStart[0]
 
-  await api.delete(`/api/blogs/${blogToDelete.id}`).expect(204)
+  await api.delete(`/api/blogs/${blogToDelete.id}`).expect(204).set('Authorization', `Bearer ${login.body.token}`)
 
   const blogsAtEnd = await helper.blogsInDb()
 
